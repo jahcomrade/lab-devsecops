@@ -6,7 +6,7 @@ import java.io.*;
 
 public class VulnerableController {
 
-    // 1. OWASP A03: Inyección SQL pura
+    // 1. OWASP A03: Inyección SQL pura PRUEBA DE PULL REQUEST
     public void getUser(String userId) throws Exception {
         Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/db", "admin", "p4ssw0rd123");
         Statement stmt = conn.createStatement();
