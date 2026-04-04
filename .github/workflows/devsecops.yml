@@ -1,4 +1,3 @@
-cat <<EOF > .github/workflows/devsecops.yml
 name: DevSecOps-Pipeline
 
 on:
@@ -20,7 +19,7 @@ jobs:
       - name: Ejecutar Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   scan-sast:
     name: Analisis de Codigo (Semgrep)
@@ -47,4 +46,3 @@ jobs:
           exit-code: '0' 
           ignore-unfixed: true
           vuln-type: 'library'
-EOF
