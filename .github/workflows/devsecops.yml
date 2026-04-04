@@ -1,12 +1,15 @@
 name: DevSecOps Pipeline
 
-# Esto le dice al pipeline que se ejecute cada vez que subas código a la rama 'main'
 on:
   push:
     branches: [ "main" ]
 
+env:
+  # Esto elimina las advertencias amarillas de Node.js
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
-  # 1. Detección de Secretos
+  # TRABAJO 1: Buscar secretos (contraseñas/llaves)
   scan-leaks:
     name: Deteccion de Secretos (Gitleaks)
     runs-on: ubuntu-latest
@@ -14,13 +17,13 @@ jobs:
       - name: Descargar el código
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Necesario para que Gitleaks lea todo el historial
+          fetch-depth: 0
       - name: Ejecutar Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
 
-  # 2. Análisis Estático (SAST)
+  # TRABAJO 2: Análisis estático del código (SAST)
   scan-sast:
     name: Analisis de Codigo (Semgrep)
     runs-on: ubuntu-latest
@@ -30,9 +33,9 @@ jobs:
       - name: Ejecutar Semgrep
         uses: returntocorp/semgrep-action@v1
         with:
-          config: "p/default" # Usa las reglas por defecto para múltiples lenguajes
+          config: "p/default"
 
-  # 3. Análisis de Dependencias (SCA)
+  # TRABAJO 3: Análisis de librerías externas (SCA)
   scan-sca:
     name: Analisis de Dependencias (Trivy)
     runs-on: ubuntu-latest
@@ -44,7 +47,7 @@ jobs:
         with:
           scan-type: 'fs'
           format: 'table'
-          # Ponemos 0 para que nos muestre el error pero no rompa el pipeline en nuestro primer intento
           exit-code: '0' 
           ignore-unfixed: true
           vuln-type: 'library'
+EOF
