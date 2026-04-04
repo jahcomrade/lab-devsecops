@@ -1,20 +1,19 @@
-name: DevSecOps Pipeline
+cat <<EOF > .github/workflows/devsecops.yml
+name: DevSecOps-Pipeline
 
 on:
   push:
     branches: [ "main" ]
 
 env:
-  # Esto elimina las advertencias amarillas de Node.js
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
-  # TRABAJO 1: Buscar secretos (contraseñas/llaves)
   scan-leaks:
     name: Deteccion de Secretos (Gitleaks)
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar el código
+      - name: Descargar el codigo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -23,24 +22,22 @@ jobs:
         env:
           GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
 
-  # TRABAJO 2: Análisis estático del código (SAST)
   scan-sast:
     name: Analisis de Codigo (Semgrep)
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar el código
+      - name: Descargar el codigo
         uses: actions/checkout@v4
       - name: Ejecutar Semgrep
         uses: returntocorp/semgrep-action@v1
         with:
           config: "p/default"
 
-  # TRABAJO 3: Análisis de librerías externas (SCA)
   scan-sca:
     name: Analisis de Dependencias (Trivy)
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar el código
+      - name: Descargar el codigo
         uses: actions/checkout@v4
       - name: Ejecutar Trivy
         uses: aquasecurity/trivy-action@master
