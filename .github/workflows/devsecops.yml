@@ -2,25 +2,39 @@ name: Mega-Vulnerability-Lab
 on: [push]
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
-  security:
+  # TRABAJO 1: Gitleaks corre por su cuenta
+  scan-leaks:
+    name: 🛡️ Gitleaks (Secrets)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: 🛡️ Gitleaks (Secret Scanning)
+      - name: Gitleaks Scan
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🔍 Semgrep (SAST - OWASP Focus)
+  # TRABAJO 2: Semgrep corre aunque Gitleaks falle
+  scan-sast:
+    name: 🔍 Semgrep (SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semgrep Scan
         uses: returntocorp/semgrep-action@v1
         with:
           config: "p/java p/owasp-top-10 p/secrets"
 
-      - name: 📦 Trivy (SCA - Critical Only)
+  # TRABAJO 3: Trivy corre aunque los anteriores fallen
+  scan-sca:
+    name: 📦 Trivy (SCA)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy Scan
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
