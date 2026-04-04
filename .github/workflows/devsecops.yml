@@ -4,6 +4,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
+  # TRABAJO 1: Gitleaks (Genera reporte JSON para Dojo)
   scan-leaks:
     name: 🛡️ Gitleaks (Secrets)
     runs-on: ubuntu-latest
@@ -15,7 +16,18 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Generamos reporte en formato SARIF para subir a Dojo
+          args: detect --report-format sarif --report-path gitleaks-report.sarif
+      
+      - name: 💾 Guardar Reporte Gitleaks
+        if: always() # Se ejecuta aunque encuentre leaks
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-results
+          path: gitleaks-report.sarif
 
+  # TRABAJO 2: Semgrep (Genera reporte SARIF para Dojo)
   scan-sast:
     name: 🔍 Semgrep (SAST)
     runs-on: ubuntu-latest
@@ -24,9 +36,17 @@ jobs:
       - name: Semgrep Scan
         uses: returntocorp/semgrep-action@v1
         with:
-          # CAMBIO CLAVE: Usamos configuraciones estables que incluyen OWASP
           config: "p/default p/security-audit"
+          generateSarif: "1"
+      
+      - name: 💾 Guardar Reporte Semgrep
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-results
+          path: semgrep.sarif
 
+  # TRABAJO 3: Trivy (Genera reporte JSON compatible con Dojo)
   scan-sca:
     name: 📦 Trivy (SCA)
     runs-on: ubuntu-latest
@@ -36,6 +56,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          format: 'table'
-          exit-code: '1'
+          format: 'json' # Dojo lee muy bien el JSON de Trivy
+          output: 'trivy-results.json'
           severity: 'CRITICAL,HIGH'
+          exit-
