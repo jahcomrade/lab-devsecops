@@ -27,7 +27,7 @@ jobs:
           name: gitleaks-results
           path: gitleaks-report.sarif
 
-  # TRABAJO 2: Semgrep (Genera reporte SARIF para Dojo)
+  # TRABAJO 2: Semgrep (Genera reporte SARIF para Dojo)aaaaaaaaaaaaa
   scan-sast:
     name: 🔍 Semgrep (SAST)
     runs-on: ubuntu-latest
