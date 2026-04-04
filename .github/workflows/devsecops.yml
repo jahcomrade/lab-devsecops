@@ -1,48 +1,29 @@
-name: DevSecOps-Pipeline
-
-on:
-  push:
-    branches: [ "main" ]
-
+name: Lab-Estricto
+on: [push]
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-
 jobs:
-  scan-leaks:
-    name: Deteccion de Secretos (Gitleaks)
+  seguridad:
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar el codigo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Ejecutar Gitleaks
+
+      - name: Escaneo-Leaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  scan-sast:
-    name: Analisis de Codigo (Semgrep)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Descargar el codigo
-        uses: actions/checkout@v4
-      - name: Ejecutar Semgrep
+      - name: Escaneo-SAST-OWASP
         uses: returntocorp/semgrep-action@v1
         with:
-          config: "p/default"
+          config: "p/owasp-top-10" # Solo reglas de OWASP
 
-  scan-sca:
-    name: Analisis de Dependencias (Trivy)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Descargar el codigo
-        uses: actions/checkout@v4
-      - name: Ejecutar Trivy
+      - name: Escaneo-SCA-Librerias
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           format: 'table'
-          exit-code: '0' 
-          ignore-unfixed: true
-          vuln-type: 'library'
+          exit-code: '1' # ESTO HACE QUE SALGA ROJO
+          severity: 'CRITICAL'
