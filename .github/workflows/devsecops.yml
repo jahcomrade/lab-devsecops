@@ -1,10 +1,12 @@
 name: Mega-Vulnerability-Lab
+
 on: [push]
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
-  # TRABAJO 1: Gitleaks (Genera reporte JSON para Dojo)
+  # TRABAJO 1: Gitleaks
   scan-leaks:
     name: 🛡️ Gitleaks (Secrets)
     runs-on: ubuntu-latest
@@ -17,17 +19,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # Generamos reporte en formato SARIF para subir a Dojo
           args: detect --report-format sarif --report-path gitleaks-report.sarif
       
       - name: 💾 Guardar Reporte Gitleaks
-        if: always() # Se ejecuta aunque encuentre leaks
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: gitleaks-results
           path: gitleaks-report.sarif
 
-  # TRABAJO 2: Semgrep (Genera reporte SARIF para Dojo)aaaaaaaaaaaaa
+  # TRABAJO 2: Semgrep
   scan-sast:
     name: 🔍 Semgrep (SAST)
     runs-on: ubuntu-latest
@@ -46,7 +47,7 @@ jobs:
           name: semgrep-results
           path: semgrep.sarif
 
-  # TRABAJO 3: Trivy (Genera reporte JSON compatible con Dojo)
+  # TRABAJO 3: Trivy
   scan-sca:
     name: 📦 Trivy (SCA)
     runs-on: ubuntu-latest
@@ -56,7 +57,14 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          format: 'json' # Dojo lee muy bien el JSON de Trivy
+          format: 'json'
           output: 'trivy-results.json'
           severity: 'CRITICAL,HIGH'
-          exit-
+          exit-code: '1'
+      
+      - name: 💾 Guardar Reporte Trivy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-results
+          path: trivy-results.json
