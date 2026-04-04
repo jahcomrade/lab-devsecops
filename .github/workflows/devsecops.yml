@@ -4,7 +4,6 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
-  # TRABAJO 1: Gitleaks corre por su cuenta
   scan-leaks:
     name: 🛡️ Gitleaks (Secrets)
     runs-on: ubuntu-latest
@@ -17,7 +16,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # TRABAJO 2: Semgrep corre aunque Gitleaks falle
   scan-sast:
     name: 🔍 Semgrep (SAST)
     runs-on: ubuntu-latest
@@ -26,9 +24,9 @@ jobs:
       - name: Semgrep Scan
         uses: returntocorp/semgrep-action@v1
         with:
-          config: "p/java p/owasp-top-10 p/secrets"
+          # CAMBIO CLAVE: Usamos configuraciones estables que incluyen OWASP
+          config: "p/default p/security-audit"
 
-  # TRABAJO 3: Trivy corre aunque los anteriores fallen
   scan-sca:
     name: 📦 Trivy (SCA)
     runs-on: ubuntu-latest
