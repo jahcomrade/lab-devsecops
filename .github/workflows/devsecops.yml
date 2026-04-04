@@ -18,12 +18,13 @@ jobs:
       - name: Escaneo-SAST-OWASP
         uses: returntocorp/semgrep-action@v1
         with:
-          config: "p/owasp-top-10" # Solo reglas de OWASP
+          # CAMBIO AQUÍ: Usamos 'p/default' que incluye OWASP y es más estable
+          config: "p/default" 
 
       - name: Escaneo-SCA-Librerias
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           format: 'table'
-          exit-code: '1' # ESTO HACE QUE SALGA ROJO
+          exit-code: '1'
           severity: 'CRITICAL'
