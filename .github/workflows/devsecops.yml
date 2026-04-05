@@ -54,5 +54,5 @@ jobs:
 
           # Subimos en orden
           Upload-Report "trivy-results.json" "Trivy Scan"
-          Upload-Report "gitleaks-report.sarif" "Gitleaks Scan"
+          Upload-Report "gitleaks-report.sarif" "SARIF"
           Upload-Report "semgrep.sarif" "SARIF"
