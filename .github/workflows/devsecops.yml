@@ -20,14 +20,18 @@ jobs:
         shell: powershell
         run: |
           $env:PYTHONUTF8=1
-          semgrep scan --config="p/default" --sarif --output=semgrep.sarif
-        continue-on-error: true
+          semgrep scan --config="p/default" --sarif --output=semgrep.sarif --error
+        continue-on-error: false
 
       - name: 📦 Ejecutar Trivy (SCA)
         shell: powershell
         run: |
+          # Este comando sube TODO a Dojo (lo que ya tienes)
           trivy fs --format json --output trivy-results.json .
-        continue-on-error: true
+          
+          
+          trivy fs --exit-code 1 --severity HIGH,CRITICAL .
+        continue-on-error: false # <--- Aquí SÍ queremos que falle
 
       - name: 🛡️ Ejecutar Gitleaks (Secrets)
         shell: powershell
