@@ -8,7 +8,7 @@ jobs:
     env:
       DOJO_URL: "http://localhost:8080"
       DOJO_TOKEN: "b3829da6a0e52e5a999123354864cfcd7ffeb9f7" # <--- PEGA TU TOKEN AQUÍ AA
-      PRODUCT_NAME: "Laboratorio-ASUS"
+      PRODUCT_NAME: ${{ github.repository }}
 
     steps:
       - name: 📂 Clonar Código
@@ -55,6 +55,8 @@ jobs:
                   -F "engagement_name=Escaneo-Automatico" `
                   -F "auto_create_context=true" `
                   -F "file=@$file"
+                  -F "close_old_findings=true" `
+                  -F "push_to_jira=false" `
               }
           }
 
