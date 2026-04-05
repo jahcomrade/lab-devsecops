@@ -1,70 +1,58 @@
-name: Mega-Vulnerability-Lab
-
+name: DevSecOps-Full-Auto-Lokal
 on: [push]
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-
 jobs:
-  # TRABAJO 1: Gitleaks
-  scan-leaks:
-    name: 🛡️ Gitleaks (Secrets)
-    runs-on: ubuntu-latest
+  security-scan:
+    name: 🛡️ Escaneo y Carga Automática
+    runs-on: [self-hosted, seguridad]
+    env:
+      DOJO_URL: "http://localhost:8080"
+      DOJO_TOKEN: "b3829da6a0e52e5a999123354864cfcd7ffeb9f7" # <--- PEGA TU TOKEN AQUÍ
+      PRODUCT_NAME: "Laboratorio-ASUS"
+
     steps:
-      - uses: actions/checkout@v4
+      - name: 📂 Clonar Código
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Gitleaks Scan
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          args: detect --report-format sarif --report-path gitleaks-report.sarif
-      
-      - name: 💾 Guardar Reporte Gitleaks
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gitleaks-results
-          path: gitleaks-report.sarif
 
-  # TRABAJO 2: Semgrep
-  scan-sast:
-    name: 🔍 Semgrep (SAST)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Semgrep Scan
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: "p/default p/security-audit"
-          generateSarif: "1"
-      
-      - name: 💾 Guardar Reporte Semgrep
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: semgrep-results
-          path: semgrep.sarif
+      - name: 🔍 Ejecutar Semgrep (SAST)
+        shell: powershell
+        run: |
+          semgrep scan --config="p/default" --sarif --output=semgrep.sarif
+        continue-on-error: true
 
-  # TRABAJO 3: Trivy
-  scan-sca:
-    name: 📦 Trivy (SCA)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Trivy Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          format: 'json'
-          output: 'trivy-results.json'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '1'
-      
-      - name: 💾 Guardar Reporte Trivy
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-results
-          path: trivy-results.json
+      - name: 📦 Ejecutar Trivy (SCA)
+        shell: powershell
+        run: |
+          trivy fs --format json --output trivy-results.json .
+        continue-on-error: true
+
+      - name: 🛡️ Ejecutar Gitleaks (Secrets)
+        shell: powershell
+        run: |
+          gitleaks detect --report-format sarif --report-path gitleaks-report.sarif
+        continue-on-error: true
+
+      - name: 🚀 Sincronizar con DefectDojo
+        shell: powershell
+        run: |
+          # Función para subir cada reporte de forma independiente
+          function Upload-Report($file, $type) {
+              if (Test-Path $file) {
+                  Write-Host "Subiendo $type..."
+                  curl.exe -X POST "${{ env.DOJO_URL }}/api/v2/import-scan/" `
+                  -H "Authorization: Token ${{ env.DOJO_TOKEN }}" `
+                  -F "active=true" `
+                  -F "verified=true" `
+                  -F "scan_type=$type" `
+                  -F "product_name=${{ env.PRODUCT_NAME }}" `
+                  -F "engagement_name=Escaneo-Automatico" `
+                  -F "auto_create_context=true" `
+                  -F "file=@$file"
+              }
+          }
+
+          Upload-Report "semgrep.sarif" "SARIF"
+          Upload-Report "trivy-results.json" "Trivy Scan"
+          Upload-Report "gitleaks-report.sarif" "Gitleaks Scan"
