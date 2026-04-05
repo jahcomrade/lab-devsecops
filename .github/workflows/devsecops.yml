@@ -19,6 +19,7 @@ jobs:
       - name: 🔍 Ejecutar Semgrep (SAST)
         shell: powershell
         run: |
+          $env:PYTHONUTF8=1
           semgrep scan --config="p/default" --sarif --output=semgrep.sarif
         continue-on-error: true
 
@@ -37,13 +38,13 @@ jobs:
       - name: 🚀 Sincronizar con DefectDojo
         shell: powershell
         run: |
-          # Configuramos la codificación para evitar errores de caracteres en Windows
           [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
           function Upload-Report($file, $type) {
               if (Test-Path $file) {
-                  Write-Host "Subiendo $type..."
-                  # Añadimos 'product_type_name' para que Dojo pueda crear el producto si no existe
+                  Write-Host "Esperando 5 segundos para sincronizar $type..."
+                  Start-Sleep -s 5 # <--- EVITA EL INTERNAL SERVER ERROR
+                  
                   curl.exe -X POST "${{ env.DOJO_URL }}/api/v2/import-scan/" `
                   -H "Authorization: Token ${{ env.DOJO_TOKEN }}" `
                   -F "active=true" `
@@ -54,12 +55,9 @@ jobs:
                   -F "engagement_name=Escaneo-Automatico" `
                   -F "auto_create_context=true" `
                   -F "file=@$file"
-              } else {
-                  Write-Warning "Archivo $file no encontrado."
               }
           }
 
           Upload-Report "trivy-results.json" "Trivy Scan"
           Upload-Report "gitleaks-report.sarif" "Gitleaks Scan"
-          # Semgrep falló en tu log, así que es probable que este archivo no exista aún
           Upload-Report "semgrep.sarif" "SARIF"
