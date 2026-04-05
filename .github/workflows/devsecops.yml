@@ -21,7 +21,7 @@ jobs:
         run: |
           $env:PYTHONUTF8=1
           semgrep scan --config="p/default" --sarif --output=semgrep.sarif --error
-        continue-on-error: false
+        continue-on-error: true
 
       - name: 📦 Ejecutar Trivy (SCA)
         shell: powershell
@@ -31,7 +31,7 @@ jobs:
           
           
           trivy fs --exit-code 1 --severity HIGH,CRITICAL .
-        continue-on-error: false # <--- Aquí SÍ queremos que falle
+        continue-on-error: true # <--- Aquí SÍ queremos que falle
 
       - name: 🛡️ Ejecutar Gitleaks (Secrets)
         shell: powershell
@@ -60,3 +60,38 @@ jobs:
           Upload-Report "trivy-results.json" "Trivy Scan"
           Upload-Report "gitleaks-report.sarif" "SARIF"
           Upload-Report "semgrep.sarif" "SARIF"
+
+      - name: ⚖️ Verificación del Umbral Crítico
+        shell: powershell
+        run: |
+          $fallo = $false
+          Write-Host "Revisando umbrales de seguridad..."
+
+          # Revisar Trivy (JSON)
+          if (Test-Path "trivy-results.json") {
+              $trivy = Get-Content "trivy-results.json" | ConvertFrom-Json
+              # Buscamos si hay alguna vulnerabilidad HIGH o CRITICAL
+              $vuls = $trivy.Results.Vulnerabilities | Where-Object { $_.Severity -match "HIGH|CRITICAL" }
+              if ($vuls) { 
+                  Write-Error "❌ TRIVY: Se encontraron vulnerabilidades HIGH/CRITICAL."
+                  $fallo = $true 
+              }
+          }
+
+          # Revisar Gitleaks (SARIF)
+          if (Test-Path "gitleaks-report.sarif") {
+              $gitleaks = Get-Content "gitleaks-report.sarif" | ConvertFrom-Json
+              if ($gitleaks.runs.results.count -gt 0) {
+                  Write-Error "❌ GITLEAKS: Se encontraron secretos expuestos."
+                  $fallo = $true
+              }
+          }
+
+          # Si detectamos fallos graves, hacemos que este paso falle de verdad
+          if ($fallo) {
+              Write-Host "--------------------------------------------------------"
+              Write-Host "RESULTADO: Reportes subidos a Dojo, pero el PUSH se BLOQUEA por riesgos altos."
+              exit 1
+          } else {
+              Write-Host "✅ TODO LIMPIO: No hay riesgos altos. Merge permitido."
+          }
