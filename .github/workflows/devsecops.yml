@@ -43,23 +43,16 @@ jobs:
           function Upload-Report($file, $type) {
               if (Test-Path $file) {
                   Write-Host "Esperando 5 segundos para sincronizar $type..."
-                  Start-Sleep -s 5 # <--- EVITA EL INTERNAL SERVER ERROR
+                  Start-Sleep -s 5
                   
-                  curl.exe -X POST "${{ env.DOJO_URL }}/api/v2/import-scan/" `
-                  -H "Authorization: Token ${{ env.DOJO_TOKEN }}" `
-                  -F "active=true" `
-                  -F "verified=true" `
-                  -F "scan_type=$type" `
-                  -F "product_name=${{ env.PRODUCT_NAME }}" `
-                  -F "product_type_name=Research and Development" `
-                  -F "engagement_name=Escaneo-Automatico" `
-                  -F "auto_create_context=true" `
-                  -F "file=@$file"
-                  -F "close_old_findings=true" `
-                  -F "push_to_jira=false" `
+                  # Ejecutamos todo en una sola línea para evitar errores de sintaxis en PowerShell
+                  curl.exe -X POST "${{ env.DOJO_URL }}/api/v2/import-scan/" -H "Authorization: Token ${{ env.DOJO_TOKEN }}" -F "active=true" -F "verified=true" -F "scan_type=$type" -F "product_name=${{ env.PRODUCT_NAME }}" -F "product_type_name=Research and Development" -F "engagement_name=CI-CD-Pipeline" -F "auto_create_context=true" -F "close_old_findings=true" -F "file=@$file"
+              } else {
+                  Write-Warning "Archivo $file no encontrado, saltando..."
               }
           }
 
+          # Subimos en orden
           Upload-Report "trivy-results.json" "Trivy Scan"
           Upload-Report "gitleaks-report.sarif" "Gitleaks Scan"
           Upload-Report "semgrep.sarif" "SARIF"
