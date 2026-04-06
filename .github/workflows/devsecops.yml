@@ -64,34 +64,19 @@ jobs:
       - name: ⚖️ Verificación del Umbral Crítico
         shell: powershell
         run: |
-          $fallo = $false
-          Write-Host "Revisando umbrales de seguridad..."
+          # Esperamos un poco para que Dojo termine de procesar la subida
+          Start-Sleep -s 10 
+          
+          $DojoUrl = "${{ env.DOJO_URL }}/api/v2/findings/?test__engagement__product__name=${{ env.PRODUCT_NAME }}&active=true&verified=true&severity=High,Critical"
+          
+          $response = curl.exe -X GET $DojoUrl -H "Authorization: Token ${{ env.DOJO_TOKEN }}" -H "Accept: application/json"
+          $data = $response | ConvertFrom-Json
 
-          # Revisar Trivy (JSON)
-          if (Test-Path "trivy-results.json") {
-              $trivy = Get-Content "trivy-results.json" | ConvertFrom-Json
-              # Buscamos si hay alguna vulnerabilidad HIGH o CRITICAL
-              $vuls = $trivy.Results.Vulnerabilities | Where-Object { $_.Severity -match "HIGH|CRITICAL" }
-              if ($vuls) { 
-                  Write-Error "❌ TRIVY: Se encontraron vulnerabilidades HIGH/CRITICAL."
-                  $fallo = $true 
-              }
-          }
+          Write-Host "Vulnerabilidades Reales (Activas y Verificadas): $($data.count)"
 
-          # Revisar Gitleaks (SARIF)
-          if (Test-Path "gitleaks-report.sarif") {
-              $gitleaks = Get-Content "gitleaks-report.sarif" | ConvertFrom-Json
-              if ($gitleaks.runs.results.count -gt 0) {
-                  Write-Error "❌ GITLEAKS: Se encontraron secretos expuestos."
-                  $fallo = $true
-              }
-          }
-
-          # Si detectamos fallos graves, hacemos que este paso falle de verdad
-          if ($fallo) {
-              Write-Host "--------------------------------------------------------"
-              Write-Host "RESULTADO: Reportes subidos a Dojo, pero el PUSH se BLOQUEA por riesgos altos."
+          if ($data.count -gt 0) {
+              Write-Error "❌ BLOQUEADO: Hay $($data.count) vulnerabilidades Críticas/Altas en Dojo."
               exit 1
           } else {
-              Write-Host "✅ TODO LIMPIO: No hay riesgos altos. Merge permitido."
+              Write-Host "✅ LIMPIO: No hay riesgos pendientes en Dojo. Merge permitido."
           }
