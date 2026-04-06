@@ -7,7 +7,7 @@ jobs:
     runs-on: [self-hosted, seguridad]
     env:
       DOJO_URL: "http://localhost:8080"
-      DOJO_TOKEN: "b3829da6a0e52e5a999123354864cfcd7ffeb9f7" # <--- PEGA TU TOKEN AQUÍ 2 a
+      DOJO_TOKEN: "b3829da6a0e52e5a999123354864cfcd7ffeb9f7" # Token de Dojo
       PRODUCT_NAME: ${{ github.repository }}
 
     steps:
@@ -31,7 +31,7 @@ jobs:
           
           
           trivy fs --exit-code 1 --severity HIGH,CRITICAL .
-        continue-on-error: true # <--- Aquí SÍ queremos que falle
+        continue-on-error: true 
 
       - name: 🛡️ Ejecutar Gitleaks (Secrets)
         shell: powershell
