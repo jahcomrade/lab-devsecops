@@ -7,7 +7,7 @@ jobs:
     runs-on: [self-hosted, seguridad]
     env:
       DOJO_URL: "http://localhost:8080"
-      DOJO_TOKEN: "b3829da6a0e52e5a999123354864cfcd7ffeb9f7" # Token de Dojo
+      DOJO_TOKEN: "b3829da6a0e52e5a999123354864cfcd7ffeb9f7" # Token de Dojo2
       PRODUCT_NAME: ${{ github.repository }}
 
     steps:
