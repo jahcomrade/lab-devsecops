@@ -7,7 +7,7 @@ jobs:
     runs-on: [self-hosted, seguridad]
     env:
       DOJO_URL: "http://localhost:8080"
-      DOJO_TOKEN: "b3829da6a0e52e5a999123354864cfcd7ffeb9f7" # Token de Dojo2
+      DOJO_TOKEN: "b3829da6a0e52e5a999123354864cfcd7ffeb9f7" # Token de Dojo
       PRODUCT_NAME: ${{ github.repository }}
 
     steps:
@@ -26,7 +26,7 @@ jobs:
       - name: 📦 Ejecutar Trivy (SCA)
         shell: powershell
         run: |
-          # Este comando sube TODO a Dojo (lo que ya tienes)
+          
           trivy fs --format json --output trivy-results.json .
           
           
@@ -49,14 +49,14 @@ jobs:
                   Write-Host "Esperando 5 segundos para sincronizar $type..."
                   Start-Sleep -s 5
                   
-                  # Ejecutamos todo en una sola línea para evitar errores de sintaxis en PowerShell
+                  
                   curl.exe -X POST "${{ env.DOJO_URL }}/api/v2/import-scan/" -H "Authorization: Token ${{ env.DOJO_TOKEN }}" -F "active=true" -F "verified=true" -F "scan_type=$type" -F "product_name=${{ env.PRODUCT_NAME }}" -F "product_type_name=Research and Development" -F "engagement_name=CI-CD-Pipeline" -F "auto_create_context=true" -F "close_old_findings=true" -F "file=@$file"
               } else {
                   Write-Warning "Archivo $file no encontrado, saltando..."
               }
           }
 
-          # Subimos en orden
+          
           Upload-Report "trivy-results.json" "Trivy Scan"
           Upload-Report "gitleaks-report.sarif" "SARIF"
           Upload-Report "semgrep.sarif" "SARIF"
@@ -64,7 +64,7 @@ jobs:
       - name: ⚖️ Verificación del Umbral Crítico
         shell: powershell
         run: |
-          # Esperamos un poco para que Dojo termine de procesar la subida
+          
           Start-Sleep -s 10 
           
           $DojoUrl = "${{ env.DOJO_URL }}/api/v2/findings/?test__engagement__product__name=${{ env.PRODUCT_NAME }}&active=true&verified=true&severity=High,Critical"
